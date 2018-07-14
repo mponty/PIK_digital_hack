@@ -41,16 +41,16 @@ if CROSS_VALIDATION:
         print('{}: {}'.format(name, score))
 
 else:
-    train = train[train['value'] < 3000]
+    # train = train[train['value'] < 3000]
     X_train = train.drop(['value', 'bulk_id'], axis=1)
 
     X_test = test.drop(['id', 'bulk_id'], axis=1)
     y_train = train['value']
 
     preds = []
-    for i in range(5):
+    for i in range(3):
         # model = CatBoostRegressor(random_state=i, iterations=1300, learning_rate=0.05)
-        model = CatBoostRegressor(random_state=i, iterations=1050)
+        model = CatBoostRegressor(random_state=i, iterations=1000)
         model.fit(X_train, y_train, cat_features=cat_ff)
         preds.append(model.predict(X_test))
 

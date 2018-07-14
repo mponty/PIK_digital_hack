@@ -5,7 +5,7 @@ from catboost import CatBoostRegressor, Pool
 from features_helper import name_to_col_num
 
 
-CROSS_VALIDATION = True
+CROSS_VALIDATION = False
 
 train = pd.read_csv('FINAL_TRAIN_month2.csv')
 test = pd.read_csv('FINAL_TEST_month2.csv')
@@ -18,7 +18,7 @@ cat_ff = ['date1', 'month', 'Класс объекта', 'Огорожена т�
 cat_ff = name_to_col_num(train.drop(['value', 'bulk_id'], axis=1), cat_ff)
 
 if CROSS_VALIDATION:
-    model = CatBoostRegressor(random_state=5, iterations=1300)
+    model = CatBoostRegressor(random_state=5, iterations=1000)
     # model = CatBoostRegressor(random_state=1, iterations=1300, learning_rate=0.03, depth=10)
 
     local_validation_cutoff = pd.DatetimeIndex(['2018-01-01']).astype(np.int64)[0]
@@ -41,14 +41,14 @@ if CROSS_VALIDATION:
         print('{}: {}'.format(name, score))
 
 else:
-    train = train[train['value'] < 3000]
+    # train = train[train['value'] < 3000]
     X_train = train.drop(['value', 'bulk_id'], axis=1)
 
     X_test = test.drop(['id', 'bulk_id'], axis=1)
     y_train = train['value']
 
     preds = []
-    for i in range(5):
+    for i in range(3):
         # model = CatBoostRegressor(random_state=i, iterations=1300, learning_rate=0.05)
         model = CatBoostRegressor(random_state=i, iterations=800)
         model.fit(X_train, y_train, cat_features=cat_ff)

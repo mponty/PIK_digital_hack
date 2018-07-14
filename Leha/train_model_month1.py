@@ -41,7 +41,7 @@ if CROSS_VALIDATION:
         print('{}: {}'.format(name, score))
 
 else:
-    train = train[train['value'] < 3000]
+    # train = train[train['value'] < 3000]
     X_train = train.drop(['value', 'bulk_id'], axis=1)
 
     X_test = test.drop(['id', 'bulk_id'], axis=1)
