@@ -614,7 +614,9 @@ def my_submit(model,
     y_test_pred = model.predict(X_test)
     y_test_pred[y_test_pred<0] = 0
         
-    R_test = X_test.copy()
+
+
+    R_test = tmp_test[['bulk_spalen_id','id_flatwork_int']].copy() 
     R_test['predict'] = y_test_pred 
              
     R_test = R_test.groupby(group_columns) \
@@ -824,14 +826,24 @@ column_study = np.array(['До метро пешком(км)', 'price', 'mean_sq
 
 lgb_model = lgb.LGBMRegressor(n_estimators = 150, random_state = 42)
 
-submission_lgb, mse, stacking_df, imp_df = my_simple_cv(lgb_model, 
+for i in range(5):
+      
+    submission_lgb, mse, stacking_df, imp_df = my_simple_cv(lgb_model, 
                                                         full, 
                                                         column_study, 
                                                         random_state=442, 
                                                         importance_flag = True)
 
-#rmse на локальной валидации этой модели
+    submission_lgb = submission_lgb.sort_values('id')
+    if i==0:
+        v = submission_lgb['value']
+    else: 
+        v = v + submission_lgb['value']
+        
+submission_lgb['value'] = v/(i+1)   
+
 rmse = np.sqrt(mse)
+
 
 submission_lgb = submission_lgb.sort_values('id')
 filename = f'c1imb3r_lgb_rmse_{(np.mean(rmse)):.4f} +- {(np.std(rmse)):.4f}.csv'
@@ -850,14 +862,61 @@ column_filter = ['id_sec','id_gk','id_flatwork','date_settle',
                  'value_1','value_2', 'value_3','dt_to_sale','flat_startsale','date_flat_startsale']
 
                 
-column_study = np.setdiff1d(np.asarray(flat_train.columns), column_filter)
+#column_study = np.setdiff1d(np.asarray(flat_train.columns), column_filter)
+
+study_cols_1 = np.array(['bulk_spalen_dolya_sqr_stat_new_0',
+       'bulk_spalen_dolya_sqr_stat_new_1',
+       'bulk_spalen_dolya_sqr_stat_new_3',
+       'bulk_spalen_dolya_sqr_stat_new_5', 'bulk_spalen_dolya_stat_new_1',
+       'bulk_spalen_dolya_stat_new_3', 'bulk_spalen_price_median',
+       'bulk_spalen_square_mean', 'cnt_stat_new_2', 'cnt_stat_new_3',
+       'diff_price_max', 'diff_price_min', 'diff_pricem2',
+       'diff_pricem2_max', 'diff_pricem2_median', 'diff_pricem2_min',
+       'diff_square_median', 'dt_flat_salestart_delay', 'dt_to_salestart',
+       'dt_to_settle', 'floor', 'last_stat_new', 'otdelka', 'plan0',
+       'pricem2_min', 'pricem2_std', 'square', 'stat_new', 'status_days',
+       'До большой дороги на машине(км)', 'До метро пешком(км)'])
+
+study_cols_2 = np.array(['bulk_spalen_dolya_sqr_stat_new_2',
+       'bulk_spalen_dolya_sqr_stat_new_3',
+       'bulk_spalen_dolya_sqr_stat_new_5', 'bulk_spalen_dolya_stat_new_2',
+       'bulk_spalen_dolya_stat_new_3', 'bulk_spalen_dolya_stat_new_5',
+       'bulk_spalen_price_max', 'bulk_spalen_pricem2_min',
+       'bulk_spalen_square_std', 'cnt_stat_new', 'cnt_stat_new_2',
+       'cnt_stat_new_3', 'diff_price_max', 'diff_price_median',
+       'diff_price_min', 'diff_pricem2_max', 'diff_pricem2_median',
+       'diff_pricem2_min', 'diff_square_min', 'dt_flat_salestart_delay',
+       'dt_settle_salestart', 'dt_to_salestart', 'dt_to_settle', 'floor',
+       'last_stat_new', 'otdelka', 'plan0', 'pricem2_min', 'sqr_stat_new',
+       'square', 'stage_number', 'stat_new', 'status_days',
+       'was_decrease_mean', 'До большой дороги на машине(км)',
+       'До метро пешком(км)', 'До парка пешком(км)',
+       'Количество помещений'])
+
+study_cols_3 = np.array(['bulk_spalen_dolya_sqr_stat_new_1',
+       'bulk_spalen_dolya_sqr_stat_new_2',
+       'bulk_spalen_dolya_sqr_stat_new_3',
+       'bulk_spalen_dolya_sqr_stat_new_5', 'bulk_spalen_dolya_stat_new_0',
+       'bulk_spalen_dolya_stat_new_1', 'bulk_spalen_dolya_stat_new_3',
+       'bulk_spalen_dolya_stat_new_5', 'bulk_spalen_pricem2_median',
+       'bulk_spalen_square_median', 'bulk_spalen_square_min',
+       'cnt_stat_new', 'cnt_stat_new_0', 'cnt_stat_new_1',
+       'cnt_stat_new_2', 'diff_pricem2', 'diff_pricem2_max',
+       'diff_pricem2_min', 'dt_flat_salestart_delay', 'dt_to_salestart',
+       'floor', 'otdelka', 'price', 'pricem2', 'pricem2_min',
+       'sqr_stat_new', 'stat_new', 'status_days', 'was_decrease_mean',
+       'Машиномест'])
+
 
 
 last_date = full[full.is_train==0].date1.dt.date.astype('str').min()
 
-for i in range(1):
+for i in range(5):
     n_month = 15
-    lgb_model = lgb.LGBMRegressor(n_estimators = 200, random_state = 42+i, predict_leaf_index = True)
+    lgb_model = lgb.LGBMRegressor(n_estimators = 500, 
+                                  #max_depth = 5, 
+                                  learning_rate = 0.05, 
+                                  random_state = 42+i, predict_leaf_index = True)
     
     submission_1 = my_submit(
                             model = lgb_model, 
@@ -867,7 +926,7 @@ for i in range(1):
                             cv_dates = [len(fixed_dates)-4], 
                             last_date = last_date,
                             n_month = n_month,
-                            study_columns = column_study, 
+                            study_columns = study_cols_1, 
                             value_column = 'value_1', 
                             group_columns = 'bulk_spalen_id',
                             random_state=442, 
@@ -881,7 +940,7 @@ for i in range(1):
                             cv_dates = [len(fixed_dates)-5],
                             last_date = last_date,
                             n_month = n_month,
-                            study_columns = column_study, 
+                            study_columns = study_cols_2, 
                             value_column = 'value_2', 
                             group_columns = 'bulk_spalen_id',
                             random_state=442, 
@@ -895,7 +954,7 @@ for i in range(1):
                             cv_dates = [len(fixed_dates)-6],
                             last_date = last_date,
                             n_month = n_month,
-                            study_columns = column_study, 
+                            study_columns = study_cols_3, 
                             value_column = 'value_3', 
                             group_columns = 'bulk_spalen_id',
                             random_state=442, 
@@ -923,7 +982,7 @@ print(best_lgb.shape)
 print(best_flat.shape)
 
 best = best_flat.merge(best_lgb, on = ['id','bulk_spalen_id'], how = 'left')
-mic_c = 0.6
+mic_c = 0.7
 
 best['predict'] = best['predict_x']
 best.loc[best['predict_x']==0, 'predict'] = best.loc[best['predict_x']==0, 'predict_y']
