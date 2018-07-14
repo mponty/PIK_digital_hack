@@ -5,7 +5,7 @@ from catboost import CatBoostRegressor, Pool
 from features_helper import name_to_col_num
 
 
-CROSS_VALIDATION = True
+CROSS_VALIDATION = False
 
 train = pd.read_csv('FINAL_TRAIN_month2.csv')
 test = pd.read_csv('FINAL_TEST_month2.csv')

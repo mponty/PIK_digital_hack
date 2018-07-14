@@ -30,8 +30,17 @@ if CROSS_VALIDATION:
     f_pool = Pool(X_train, y_train, cat_features=cat_ff)
     model.fit(X_train, y_train,
               cat_features=cat_ff,
-              eval_set=(X_validation, y_validation),
+              # eval_set=(X_validation, y_validation),
               )
+    preds_3 = model.predict(X_validation)
+    sub = pd.DataFrame(columns=['bulk_id', 'spalen', 'date1', 'value'])
+    sub['bulk_id'] = train[train.date1 >= local_validation_cutoff].drop(['value'], axis=1)['bulk_id']
+    sub['spalen'] = X_validation['spalen']
+    sub['date1'] = X_validation['date1']
+    sub['value'] = np.round(preds_3, 4)
+    sub.loc[sub['value'] < 0, 'value'] = 0
+    sub.to_csv('cat_for_coeff_search.csv', index=False)
+    
     print('best iteration found')
 
     # feature_importances = model.get_feature_importance(X_train, y_train, cat_features=cat_ff)

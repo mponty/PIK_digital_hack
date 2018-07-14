@@ -5,8 +5,8 @@ from sklearn.preprocessing import MinMaxScaler, LabelEncoder
 from scipy.linalg import norm
 
 
-train = pd.read_csv('FINAL_TRAIN_month1.csv')
-test = pd.read_csv('FINAL_TEST_month1.csv')
+train = pd.read_csv('FINAL_TRAIN_month3.csv')
+test = pd.read_csv('FINAL_TEST_month3.csv')
 
 # getting cat features indexes
 cat_ff_list = ['date1', 'month', 'Класс объекта', 'Огорожена территория', 'Входные группы', 'Спортивная площадка',
@@ -72,4 +72,4 @@ sub['id'] = test['id']
 sub['value'] = np.round(y, 4)
 sub.loc[sub['value'] < 0, 'value'] = 0
 
-sub.to_csv('lr_submission_month1.csv', index=False)
+sub.to_csv('lr_submission_month3!.csv', index=False)
