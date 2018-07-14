@@ -75,6 +75,7 @@ f_salestart['sum_still_sale'] = 0
 f_salestart['sum_flat_still_sale'] = 0
 f_salestart['flat_still_sale'] = 0
 f_salestart['idle_square'] = 0
+f_salestart['flat_idle_square'] = 0
 f_salestart['shadow_start_square'] = 0
 
 for i, m in enumerate(mm):
@@ -135,6 +136,13 @@ for i, m in enumerate(mm):
     point_all_flats_on_sell = point_all_flats_on_sell.rename(columns={'square': 'idle_square2'})
     point_all_flats_on_sell['date1'] = cur_m
     f_salestart = pd.merge(left=f_salestart, right=point_all_flats_on_sell, on=['bulk_id', 'spalen', 'date1'], how='left')
+    
+    # IDLE 2
+    flat_idle_square = flat_df[flat_df['flat_startsale'] >= next_m]
+    flat_idle_square = flat_idle_square.groupby(['bulk_id', 'spalen'], as_index=False).agg({'square': np.sum})
+    flat_idle_square = flat_idle_square.rename(columns={'square': 'flat_idle_square2'})
+    flat_idle_square['date1'] = cur_m
+    f_salestart = pd.merge(left=f_salestart, right=flat_idle_square, on=['bulk_id', 'spalen', 'date1'], how='left')
 
     f_salestart = f_salestart.fillna(0)
     f_salestart['new_still_sale'] = f_salestart['new_still_sale'] + f_salestart['new_still_sale2']
@@ -142,10 +150,12 @@ for i, m in enumerate(mm):
     f_salestart['sum_flat_still_sale'] = f_salestart['sum_flat_still_sale'] + f_salestart['sum_flat_still_sale2']
     f_salestart['flat_still_sale'] = f_salestart['flat_still_sale'] + f_salestart['flat_still_sale2']
     f_salestart['idle_square'] = f_salestart['idle_square'] + f_salestart['idle_square2']
+    f_salestart['flat_idle_square'] = f_salestart['flat_idle_square'] + f_salestart['flat_idle_square2']
     f_salestart['shadow_start_square'] = f_salestart['shadow_start_square'] + f_salestart['shadow_start_square2']
-    f_salestart = f_salestart.drop(['new_still_sale2', 'sum_still_sale2', 'idle_square2', 'shadow_start_square2', 'flat_still_sale2', 'sum_flat_still_sale2'], axis=1)
+    f_salestart = f_salestart.drop(['new_still_sale2', 'sum_still_sale2', 'idle_square2', 'shadow_start_square2', 'flat_still_sale2', 'sum_flat_still_sale2', 'flat_idle_square2'], axis=1)
 
 
+# f_salestart = f_salestart.drop(['idle_square'], axis=1)
 f_salestart.fillna(0, inplace=True)
 f_salestart = f_salestart.rename(columns={'bulk_id': 'bulk_id'})
 f_salestart.to_csv('features_salestart.csv', index=False)
