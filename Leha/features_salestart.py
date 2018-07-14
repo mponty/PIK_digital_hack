@@ -6,6 +6,8 @@ flat_df = pd.read_csv('../files-pik_digital_day/flat.csv', encoding='cp1251')
 
 flat_df['date_salestart'] = pd.to_datetime(flat_df['date_salestart'])
 flat_df['date_salestart'] = pd.DatetimeIndex(flat_df['date_salestart']).astype(np.int64)
+flat_df['flat_startsale'] = pd.to_datetime(flat_df['flat_startsale'])
+flat_df['flat_startsale'] = pd.DatetimeIndex(flat_df['flat_startsale']).astype(np.int64)
 flat_df['sale'] = pd.to_datetime(flat_df['sale'])
 flat_df['sale'] = pd.DatetimeIndex(flat_df['sale']).astype(np.int64)
 
@@ -50,11 +52,11 @@ mm = [
 ]
 
 # every_month_stat = flat_df[['bulk_id', 'spalen']].drop_duplicates()
-# f_salestart = pd.DataFrame(columns=['id_bulk', 'spalen', 'date1', 'new_still_sale', 'sum_still_sale', 'idle_square'])
+# f_salestart = pd.DataFrame(columns=['bulk_id', 'spalen', 'date1', 'new_still_sale', 'sum_still_sale', 'idle_square'])
 
 
-# f_salestart = flat_df[['id_bulk', 'spalen', 'date1']].drop_duplicates()
-what_we_want = flat_df[['id_bulk', 'spalen']].drop_duplicates()
+# f_salestart = flat_df[['bulk_id', 'spalen', 'date1']].drop_duplicates()
+what_we_want = flat_df[['bulk_id', 'spalen']].drop_duplicates()
 f_salestart = None
 for i, m in enumerate(mm):
     if m == '2018-06-01':
@@ -86,53 +88,53 @@ for i, m in enumerate(mm):
     cur_in_sale = flat_df[flat_df['sale'] >= next_m]
     cur_in_sale = cur_in_sale[cur_in_sale['date_salestart'] < next_m]
     flat_in_sale = flat_df[flat_df['sale'] >= next_m]
-    flat_in_sale = flat_in_sale[flat_in_sale['flat_salestart'] < next_m]  # cur_m
+    flat_in_sale = flat_in_sale[flat_in_sale['flat_startsale'] < next_m]  # cur_m
 
     # how many started exactly that month ?
     that_month = cur_in_sale[cur_in_sale['date_salestart'] >= cur_m]
-    that_month = that_month.groupby(['id_bulk', 'spalen'], as_index=False).agg({'square': np.sum, 'date_salestart': lambda s: np.mean(s.values - cur_m) / (next_m - cur_m)})
+    that_month = that_month.groupby(['bulk_id', 'spalen'], as_index=False).agg({'square': np.sum, 'date_salestart': lambda s: np.mean(s.values - cur_m) / (next_m - cur_m)})
     that_month['square'] = that_month['square'] * that_month['date_salestart']
     that_month = that_month.rename(columns={'square': 'new_still_sale2'})
     that_month = that_month.drop(['date_salestart'], axis=1)
     that_month['date1'] = cur_m
-    f_salestart = pd.merge(left=f_salestart, right=that_month, on=['id_bulk', 'spalen', 'date1'], how='left')
+    f_salestart = pd.merge(left=f_salestart, right=that_month, on=['bulk_id', 'spalen', 'date1'], how='left')
 
 
     # how many square not still sold ?
-    still_not_sold = cur_in_sale.groupby(['id_bulk', 'spalen'], as_index=False).agg({'square': np.sum})
+    still_not_sold = cur_in_sale.groupby(['bulk_id', 'spalen'], as_index=False).agg({'square': np.sum})
     still_not_sold = still_not_sold.rename(columns={'square': 'sum_still_sale2'})
     still_not_sold['date1'] = cur_m
-    f_salestart = pd.merge(left=f_salestart, right=still_not_sold, on=['id_bulk', 'spalen', 'date1'], how='left')
+    f_salestart = pd.merge(left=f_salestart, right=still_not_sold, on=['bulk_id', 'spalen', 'date1'], how='left')
 
     # how many square not still sold ? NEW DATA
-    sum_flat_still_sale = flat_in_sale.groupby(['id_bulk', 'spalen'], as_index=False).agg({'square': np.sum})
+    sum_flat_still_sale = flat_in_sale.groupby(['bulk_id', 'spalen'], as_index=False).agg({'square': np.sum})
     sum_flat_still_sale = sum_flat_still_sale.rename(columns={'square': 'sum_flat_still_sale2'})
     sum_flat_still_sale['date1'] = cur_m
-    f_salestart = pd.merge(left=f_salestart, right=sum_flat_still_sale, on=['id_bulk', 'spalen', 'date1'], how='left')
+    f_salestart = pd.merge(left=f_salestart, right=sum_flat_still_sale, on=['bulk_id', 'spalen', 'date1'], how='left')
 
     # the same but number of flats
-    # flat_still_sale = cur_in_sale.groupby(['id_bulk', 'spalen'], as_index=False).agg({'floor': np.mean})
-    flat_still_sale = cur_in_sale.groupby(['id_bulk', 'spalen'], as_index=False).agg({'floor': lambda s: s[(s > 1) & (s < 8)].values.shape[0]})
+    # flat_still_sale = cur_in_sale.groupby(['bulk_id', 'spalen'], as_index=False).agg({'floor': np.mean})
+    flat_still_sale = cur_in_sale.groupby(['bulk_id', 'spalen'], as_index=False).agg({'floor': lambda s: s[(s > 1) & (s < 8)].values.shape[0]})
     flat_still_sale = flat_still_sale.rename(columns={'floor': 'flat_still_sale2'})
     flat_still_sale['date1'] = cur_m
-    f_salestart = pd.merge(left=f_salestart, right=flat_still_sale, on=['id_bulk', 'spalen', 'date1'], how='left')
+    f_salestart = pd.merge(left=f_salestart, right=flat_still_sale, on=['bulk_id', 'spalen', 'date1'], how='left')
 
 
     # shadow start square
     cur_in_sale2 = flat_df[flat_df['sale'] >= next_m]
     cur_in_sale2 = cur_in_sale2[cur_in_sale2['date_salestart'] < cur_m]
-    shadow_start_square = cur_in_sale2.groupby(['id_bulk', 'spalen'], as_index=False).agg({'square': np.sum})
+    shadow_start_square = cur_in_sale2.groupby(['bulk_id', 'spalen'], as_index=False).agg({'square': np.sum})
     shadow_start_square = shadow_start_square.rename(columns={'square': 'shadow_start_square2'})
     shadow_start_square['date1'] = cur_m
-    f_salestart = pd.merge(left=f_salestart, right=shadow_start_square, on=['id_bulk', 'spalen', 'date1'], how='left')
+    f_salestart = pd.merge(left=f_salestart, right=shadow_start_square, on=['bulk_id', 'spalen', 'date1'], how='left')
 
 
     # point, that there are no more flats with feature date_salestart ?
     point_all_flats_on_sell = flat_df[flat_df['date_salestart'] >= next_m]
-    point_all_flats_on_sell = point_all_flats_on_sell.groupby(['id_bulk', 'spalen'], as_index=False).agg({'square': np.sum})
+    point_all_flats_on_sell = point_all_flats_on_sell.groupby(['bulk_id', 'spalen'], as_index=False).agg({'square': np.sum})
     point_all_flats_on_sell = point_all_flats_on_sell.rename(columns={'square': 'idle_square2'})
     point_all_flats_on_sell['date1'] = cur_m
-    f_salestart = pd.merge(left=f_salestart, right=point_all_flats_on_sell, on=['id_bulk', 'spalen', 'date1'], how='left')
+    f_salestart = pd.merge(left=f_salestart, right=point_all_flats_on_sell, on=['bulk_id', 'spalen', 'date1'], how='left')
 
     f_salestart = f_salestart.fillna(0)
     f_salestart['new_still_sale'] = f_salestart['new_still_sale'] + f_salestart['new_still_sale2']
@@ -145,7 +147,7 @@ for i, m in enumerate(mm):
 
 
 f_salestart.fillna(0, inplace=True)
-f_salestart = f_salestart.rename(columns={'id_bulk': 'bulk_id'})
+f_salestart = f_salestart.rename(columns={'bulk_id': 'bulk_id'})
 f_salestart.to_csv('features_salestart.csv', index=False)
 
 print(__file__)
