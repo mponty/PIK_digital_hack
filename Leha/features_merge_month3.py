@@ -65,6 +65,18 @@ features_values3 = pd.read_csv('features_values_month3.csv')
 train = pd.merge(left=train, right=features_values3, on=['bulk_id', 'spalen', 'date1'], how='left')
 test = pd.merge(left=test, right=features_values3, on=['bulk_id', 'spalen', 'date1'], how='left')
 
+
+#TODO: check
+# """
+# Monty features
+# """
+# monty_features = pd.read_csv('../orig_data/monty_features.csv')
+# monty_features['date1'] = pd.DatetimeIndex(pd.to_datetime(monty_features.date1)).astype('int64')
+
+# train = pd.merge(left=train, right=monty_features, on=['bulk_id', 'spalen', 'date1'], how='left')
+# test = pd.merge(left=test, right=monty_features, on=['bulk_id', 'spalen', 'date1'], how='left')
+
+
 # features_values2 = pd.read_csv('features_values2.csv')
 # train = pd.merge(left=train, right=features_values2, on=['bulk_id', 'spalen', 'date1'], how='left')
 # test = pd.merge(left=test, right=features_values2, on=['bulk_id', 'spalen', 'date1'], how='left')
